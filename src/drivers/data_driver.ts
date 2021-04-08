@@ -3,7 +3,7 @@ import {sleep, interpolate} from "../lib/helper_functions"
 
 
 export default class DataDriver extends Logger {
-    i2c_adress: number = 0
+    i2c_address: number = 0
     bus: any = null
 
     collecting_data_interval_id = null
@@ -29,7 +29,7 @@ export default class DataDriver extends Logger {
     constructor(addr:number = 8) {
         super()
         super.setLogPrefix(this)
-        this.i2c_adress = addr
+        this.i2c_address = addr
     }
 
     async init() {
@@ -76,7 +76,8 @@ export default class DataDriver extends Logger {
 
     readData(addr: number) {
         if (process.env.NODE_ENV == "production") {
-            return this.bus.readByteSync(this.i2c_adress, addr)
+            console.log(this.bus.readWordSync(this.i2c_address, addr))
+            return 0 // this.bus.readByteSync(this.i2c_address, addr)
         } else {
             return 0
         }
