@@ -1,12 +1,14 @@
-import ServoDriver from "./servo_driver"
-import DataControllerDriver from "./data_controller_driver"
-import {sleep} from "./helper_functions"
+import ServoDriver from "./src/drivers/servo_driver"
+import {sleep} from "./src/lib/helper_functions"
+import DataDriver from "./src/drivers/data_driver";
 
 const servo_driver = new ServoDriver()
-const data_controller = new DataControllerDriver()
+const data_controller = new DataDriver()
+
+process.env.NODE_ENV = process.env.NODE_ENV || "development"
 
 process.on('SIGINT', function() {
-    console.log("Cleaning up...")
+    console.log("\nCleaning up...")
     servo_driver.clean_up()
     data_controller.clean_up()
     console.log("Exiting!")
@@ -19,13 +21,13 @@ async function run() {
     const servos = 6
     while (true) {
         for (let i = 0; i < servos; i++) {
-            servo_driver.set_ouput(i, 0)
+            servo_driver.set_output(i, 0)
         }
         console.log(data_controller.sensor_data)
         await sleep(2000)
         console.log(data_controller.sensor_data)
         for (let i = 0; i < servos; i++) {
-            servo_driver.set_ouput(i, 1)
+            servo_driver.set_output(i, 1)
         }
         await sleep(2000)
     }
