@@ -35,8 +35,9 @@ export default class DataDriver extends Logger {
     async init() {
         if (process.env.NODE_ENV == "production") {
             console.log("he")
-            //const i2c = require('i2c-bus');
-            //this.bus = i2c.openSync(0);
+            const i2c = require('i2c-bus');
+            this.bus = i2c.openSync(0);
+
             const result: number[] = this.bus.scanSync();
 
             if (!result.includes(8)) {
