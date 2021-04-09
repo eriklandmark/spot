@@ -1,7 +1,6 @@
 import Logger from "../lib/logger";
 import {sleep, interpolate} from "../lib/helper_functions"
 
-
 export default class DataDriver extends Logger {
     i2c_address: number = 0
     bus: any = null
@@ -9,7 +8,7 @@ export default class DataDriver extends Logger {
     collecting_data_interval_id = null
 
     BEC_TEMP_KOEFFS = [ -53.108535084119779, 0.480508822322528]
-    VOLTAGE_KOEFFS = [5.313720316622691, 0.020091107953905]
+    VOLTAGE_KOEFFS = [0.036824517639494, 0.020426317305139]
 
     sensor_data = {
         "voltage": {
@@ -51,7 +50,7 @@ export default class DataDriver extends Logger {
                 this.log("Found Device!")
             }
         } else {
-            this.log("Running in DEV-mode! All input are faked")
+            this.log("Running in DEV-mode! All inputs are faked")
         }
 
         const collect = () => {
