@@ -76,8 +76,11 @@ export default class DataDriver extends Logger {
 
     readData(addr: number) {
         if (process.env.NODE_ENV == "production") {
-            console.log(this.bus.readWordSync(this.i2c_address, addr))
-            return 0 // this.bus.readByteSync(this.i2c_address, addr)
+            const l = this.bus.readWordSync(this.i2c_address, addr)
+            let data = ((l >> 8) + ((l & 0xff) << 8))
+            console.log((l << 8).toString(2))
+            return 0
+            //return 0 //this.bus.readByteSync(this.i2c_address, addr)
         } else {
             return 0
         }
