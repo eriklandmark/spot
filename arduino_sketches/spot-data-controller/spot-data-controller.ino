@@ -12,13 +12,13 @@ void setup() {
     pinMode(6, OUTPUT);
     pinMode(7, OUTPUT);
     pinMode(8, INPUT);
-    pinMode(9, INPUT)
+    pinMode(9, INPUT);
 }
 
 int cmd = 0;
 
 // 0 = voltage, 1 = current, 2 = bec_temp
-int stored_data[3] = {0,0,0,0,0};
+int stored_data[5] = {0,0,0,0,0};
 
 unsigned long previousMillis = millis();
 unsigned long interval = 50;
@@ -33,7 +33,11 @@ void loop(){
 
 void requestEvents() {
     if (cmd > 0) {
-        Wire.write(stored_data[cmd - 1]);
+        byte data_array[2];
+        uint16_t data = stored_data[cmd - 1];
+        data_array[0] = (data >> 8) & 0xFF;
+        data_array[1] = data & 0xFF;
+        Wire.write(data_array, 2);
         cmd = 0;
     }
 }
@@ -66,6 +70,7 @@ void updateData() {
         digitalWrite(6 + i, LOW);
 
         int duration = pulseIn(8 + i, HIGH);
-        stored_data[3 + i] = (int) (duration/2) / 29.1;
+        stored_data[3 + i] = duration;
+        // (int) (duration/2) / 29.1;
     }
 }

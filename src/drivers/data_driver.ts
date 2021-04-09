@@ -23,6 +23,10 @@ export default class DataDriver extends Logger {
         "bec_temp": {
             calc: 0,
             raw: 0
+        },
+        "distance_sensor_0": {
+            calc: 0,
+            raw: 0
         }
     }
 
@@ -69,6 +73,12 @@ export default class DataDriver extends Logger {
                 calc: this.BEC_TEMP_KOEFFS[0] + this.BEC_TEMP_KOEFFS[1]*raw_bec_temp_data
             }
 
+            const raw_distance_sensor_0_data = this.readData(4)
+            this.sensor_data.distance_sensor_0 = {
+                raw: raw_distance_sensor_0_data,
+                calc: raw_distance_sensor_0_data
+            }
+
         }
         collect()
         this.collecting_data_interval_id = setInterval(collect, 100)
@@ -76,11 +86,10 @@ export default class DataDriver extends Logger {
 
     readData(addr: number) {
         if (process.env.NODE_ENV == "production") {
-            const l = this.bus.readWordSync(this.i2c_address, addr)
-            let data = ((l >> 8) + ((l & 0xff) << 8))
-            console.log((l << 8).toString(2))
-            return 0
-            //return 0 //this.bus.readByteSync(this.i2c_address, addr)
+            const word = this.bus.readWordSync(this.i2c_address, addr)
+            const low = ((word >> 8) & 0xff);
+            const high = word & 0xff;
+            return (((high & 0xff) << 8) | (low & 0xff));
         } else {
             return 0
         }
