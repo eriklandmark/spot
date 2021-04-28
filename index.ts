@@ -1,24 +1,40 @@
 import ServoDriver from "./src/drivers/servo_driver"
 import {sleep} from "./src/lib/helper_functions"
 import DataDriver from "./src/drivers/data_driver";
+import CameraDriver from "./src/drivers/camera_driver";
+import HardwareDriver from "./src/drivers/hardware_driver";
 
 const servo_driver = new ServoDriver()
-const data_controller = new DataDriver()
+const data_driver = new DataDriver()
+const camera_driver = new CameraDriver()
+const hardware_driver = new HardwareDriver()
 
 process.env.NODE_ENV = process.env.NODE_ENV || "development"
 
 process.on('SIGINT', function() {
     console.log("\nCleaning up...")
+    camera_driver.stop()
     servo_driver.clean_up()
-    data_controller.clean_up()
+    data_driver.clean_up()
+    hardware_driver.clean_up()
     console.log("Exiting!")
     process.exit()
 });
 
 async function run() {
     await servo_driver.init()
-    await data_controller.init()
-    const servos = 6
+    await data_driver.init()
+    await camera_driver.init()
+    await hardware_driver.init()
+    //camera_driver.start()
+
+    console.log("Started")
+
+    setInterval(() => {
+        console.log({data_driver: data_driver.data, camera_driver: camera_driver.data, hardware_driver: hardware_driver.data})
+    }, 200)
+
+    /*const servos = 2
     while (true) {
         for (let i = 0; i < servos; i++) {
             servo_driver.set_output(i, 0)
@@ -30,7 +46,7 @@ async function run() {
             servo_driver.set_output(i, 1)
         }
         await sleep(2000)
-    }
+    }*/
 }
 
 run()

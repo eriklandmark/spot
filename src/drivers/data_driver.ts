@@ -10,7 +10,7 @@ export default class DataDriver extends Logger {
     BEC_TEMP_KOEFFS = [ -53.108535084119779, 0.480508822322528]
     VOLTAGE_KOEFFS = [0.036824517639494, 0.020426317305139]
 
-    sensor_data = {
+    data = {
         "voltage": {
             calc: 0,
             raw: 0
@@ -55,25 +55,25 @@ export default class DataDriver extends Logger {
 
         const collect = () => {
             const raw_voltage_data = this.readData(1)
-            this.sensor_data.voltage = {
+            this.data.voltage = {
                 raw: raw_voltage_data,
                 calc: this.VOLTAGE_KOEFFS[0] + this.VOLTAGE_KOEFFS[1]*raw_voltage_data
             }
 
             const raw_current_data = this.readData(2)
-            this.sensor_data.current = {
+            this.data.current = {
                 raw: raw_current_data,
                 calc: raw_current_data
             }
 
             const raw_bec_temp_data = this.readData(3)
-            this.sensor_data.bec_temp = {
+            this.data.bec_temp = {
                 raw: raw_bec_temp_data,
                 calc: this.BEC_TEMP_KOEFFS[0] + this.BEC_TEMP_KOEFFS[1]*raw_bec_temp_data
             }
 
             const raw_distance_sensor_0_data = this.readData(4)
-            this.sensor_data.distance_sensor_0 = {
+            this.data.distance_sensor_0 = {
                 raw: raw_distance_sensor_0_data,
                 calc: raw_distance_sensor_0_data
             }

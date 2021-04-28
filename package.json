@@ -14,7 +14,10 @@
   "license": "ISC",
   "dependencies": {
     "i2c-bus": "^5.2.1",
+    "jpeg-js": "^0.3.7",
     "nn-lib": "github:eriklandmark/nn-lib",
+    "pi-camera-connect": "^0.3.4",
+    "sharp": "^0.28.1",
     "ts-node-dev": "^1.1.6",
     "typescript": "^4.2.3"
   },
