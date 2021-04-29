@@ -1,8 +1,22 @@
 #include <Wire.h>
 
+#define DEBUG true
+
+#define I2C_ADDRESS 8
+
+#define SAMPLE_RATE 20 // SAMPLES per second.
+#define SAMPLE_RANGE false
+
 void setup() {
-    Wire.begin(8);
-    delay(1000);               
+    analogReadResolution(13);
+
+    if (DEBUG) {
+        Serial.begin(9600);
+        delay(500);
+    }
+
+    Wire.begin(I2C_ADDRESS);
+    delay(500);
     Wire.onRequest(requestEvents);
     Wire.onReceive(receiveEvents);
 
@@ -13,21 +27,31 @@ void setup() {
     pinMode(7, OUTPUT);
     pinMode(8, INPUT);
     pinMode(9, INPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
 }
 
 int cmd = 0;
 
 // 0 = voltage, 1 = current, 2 = bec_temp
-int stored_data[5] = {0,0,0,0,0};
+const int stored_data_length = 5;
+int stored_data[stored_data_length] = {0,0,0,0,0};
 
 unsigned long previousMillis = millis();
-unsigned long interval = 50;
 
 void loop(){
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
+    if (currentMillis - previousMillis >= (1000/SAMPLE_RATE)) {
         previousMillis = currentMillis;
         updateData();
+
+        if (DEBUG) {
+            for(int i = 0; i < stored_data_length; i++) {
+                Serial.print(stored_data[i]);
+                Serial.print("\t");
+            }
+            Serial.println("");
+        }
     }
 }
 
@@ -62,15 +86,17 @@ void updateData() {
     stored_data[1] = analogRead(A1);
     stored_data[2] = analogRead(A2);
 
-    for (int i = 0; i < 1; i++) {
-        digitalWrite(6 + i, LOW);
-        delayMicroseconds(5);
-        digitalWrite(6 + i, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(6 + i, LOW);
+    if (SAMPLE_RANGE) {
+        for (int i = 0; i < 1; i++) {
+            digitalWrite(6 + i, LOW);
+            delayMicroseconds(5);
+            digitalWrite(6 + i, HIGH);
+            delayMicroseconds(10);
+            digitalWrite(6 + i, LOW);
 
-        int duration = pulseIn(8 + i, HIGH);
-        stored_data[3 + i] = duration;
-        // (int) (duration/2) / 29.1;
+            int duration = pulseIn(8 + i, HIGH);
+            stored_data[3 + i] = duration;
+            // (int) (duration/2) / 29.1;
+        }
     }
 }
