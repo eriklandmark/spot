@@ -15,6 +15,8 @@ void setup() {
         delay(500);
     }
 
+    Wire.setSDA(18);
+    Wire.setSCL(19);
     Wire.begin(I2C_ADDRESS);
     delay(500);
     Wire.onRequest(requestEvents);
