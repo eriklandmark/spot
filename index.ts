@@ -3,6 +3,7 @@ import {sleep} from "./src/lib/helper_functions"
 import DataDriver from "./src/drivers/data_driver";
 import CameraDriver from "./src/drivers/camera_driver";
 import HardwareDriver from "./src/drivers/hardware_driver";
+import ws from "ws"
 
 const servo_driver = new ServoDriver()
 const data_driver = new DataDriver()
@@ -21,6 +22,11 @@ process.on('SIGINT', function() {
     process.exit()
 });
 
+const server = new ws.Server({
+    port: 5100
+})
+
+
 async function run() {
     await servo_driver.init()
     await data_driver.init()
@@ -30,9 +36,17 @@ async function run() {
 
     console.log("Started")
 
-    setInterval(() => {
-        console.log({data_driver: data_driver.data, camera_driver: camera_driver.data, hardware_driver: hardware_driver.data})
-    }, 200)
+    server.on('connection', (ws) => {
+        console.log("New Connection")
+        setInterval(() => {
+            try {
+                ws.send(JSON.stringify({data_driver: data_driver.data, camera_driver: camera_driver.data, hardware_driver: hardware_driver.data}))
+            } catch(e) {
+
+            }
+        }, 200)
+    });
+
 
     /*const servos = 2
     while (true) {
