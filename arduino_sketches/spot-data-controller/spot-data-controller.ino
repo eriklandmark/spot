@@ -1,4 +1,4 @@
-#include <Wire.h>
+#include <i2c_t3.h>
 
 #define DEBUG false
 
@@ -8,7 +8,7 @@
 #define SAMPLE_RANGE true
 
 void setup() {
-    analogReadResolution(13);
+    analogReadResolution(14);
 
     if (DEBUG) {
         Serial.begin(9600);
@@ -17,7 +17,7 @@ void setup() {
 
     Wire.setSDA(18);
     Wire.setSCL(19);
-    Wire.begin(I2C_ADDRESS);
+    Wire1.begin(I2C_SLAVE, I2C_ADDRESS, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
     delay(500);
     Wire.onRequest(requestEvents);
     Wire.onReceive(receiveEvents);
@@ -59,7 +59,7 @@ void loop(){
 
 void requestEvents() {
     if (cmd > 0) {
-        byte data_array[2];
+        uint8_t data_array[2];
         //Serial.print(cmd);
         //Serial.print(":");
         //Serial.println(stored_data[cmd - 1]);
@@ -70,7 +70,7 @@ void requestEvents() {
     }
 }
 
-void receiveEvents(int numBytes) {
+void receiveEvents(size_t numBytes) {
     int index = 0;
     int data[numBytes];
     while(Wire.available()) {
