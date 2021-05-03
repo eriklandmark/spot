@@ -1,11 +1,11 @@
 #include <Wire.h>
 
-#define DEBUG true
+#define DEBUG false
 
 #define I2C_ADDRESS 8
 
 #define SAMPLE_RATE 20 // SAMPLES per second.
-#define SAMPLE_RANGE false
+#define SAMPLE_RANGE true
 
 void setup() {
     analogReadResolution(13);
@@ -60,9 +60,11 @@ void loop(){
 void requestEvents() {
     if (cmd > 0) {
         byte data_array[2];
-        uint16_t data = stored_data[cmd - 1];
-        data_array[0] = (data >> 8) & 0xFF;
-        data_array[1] = data & 0xFF;
+        //Serial.print(cmd);
+        //Serial.print(":");
+        //Serial.println(stored_data[cmd - 1]);
+        data_array[0] = (stored_data[cmd - 1] >> 8) & 0xFF;
+        data_array[1] = stored_data[cmd - 1] & 0xFF;
         Wire.write(data_array, 2);
         cmd = 0;
     }
@@ -77,10 +79,6 @@ void receiveEvents(int numBytes) {
     }
 
     cmd = data[0];
-
-    if (numBytes > 1) {
-        stored_data[cmd - 1] = data[1];
-    }
 }
 
 void updateData() {
@@ -98,6 +96,7 @@ void updateData() {
 
             int duration = pulseIn(8 + i, HIGH);
             stored_data[3 + i] = duration;
+            
             // (int) (duration/2) / 29.1;
         }
     }
