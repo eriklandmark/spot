@@ -15,8 +15,6 @@ void setup() {
         delay(500);
     }
 
-    //Wire.setSDA(18);
-    //Wire.setSCL(19);
     Wire.begin(I2C_SLAVE, I2C_ADDRESS, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
     delay(500);
     Wire.onRequest(requestEvents);
@@ -35,7 +33,7 @@ void setup() {
 
 int cmd = 0;
 
-// 0 = voltage, 1 = current, 2 = bec_temp
+// 0 = voltage, 1 = current, 2 = bec_temp, range_0, range_1
 const int stored_data_length = 5;
 int stored_data[stored_data_length] = {0,0,0,0,0};
 
@@ -60,9 +58,6 @@ void loop(){
 void requestEvents() {
     if (cmd > 0) {
         uint8_t data_array[2];
-        //Serial.print(cmd);
-        //Serial.print(":");
-        //Serial.println(stored_data[cmd - 1]);
         data_array[0] = (stored_data[cmd - 1] >> 8) & 0xFF;
         data_array[1] = stored_data[cmd - 1] & 0xFF;
         Wire.write(data_array, 2);
@@ -96,8 +91,6 @@ void updateData() {
 
             int duration = pulseIn(8 + i, HIGH);
             stored_data[3 + i] = duration;
-            
-            // (int) (duration/2) / 29.1;
         }
     }
 }
