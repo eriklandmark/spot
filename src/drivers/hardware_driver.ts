@@ -54,9 +54,7 @@ export default class HardwareDriver extends Logger {
             setInterval(collect_fan_speed, this.polling_rate)
 
             const proc = spawn("./src/lib/start_log.sh");
-            const onErr = (err)  => {
-                console.log("ERROR IN LOG PROCESS:", err.message | err)
-            }
+            const onErr = (err: any)  => {this.error("ERROR IN LOG PROCESS: " + (err.message | err))}
             proc.stderr.on("data", onErr);
             proc.on("error", onErr);
 

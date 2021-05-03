@@ -3,12 +3,12 @@ export default class CameraDriver {
     pipeline: any = null
     latest_image: any = null
     latest_image_time: number = 0
-    started: boolean = false
 
     fps_calcs: number[] = []
     fps_sample_rate = 10
     
     data = {
+        onOff: false,
         avg_fps: 0
     }
 
@@ -52,14 +52,14 @@ export default class CameraDriver {
             }
 
             appsink.pull(onData);
-            this.started = true
+            this.data.onOff = true
         }
     }
 
     stop() {
-        if (this.started) {
+        if (this.data.onOff) {
             this.pipeline.stop()
-            this.started = false
+            this.data.onOff = false
         }
     }
 }

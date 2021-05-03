@@ -23,7 +23,7 @@ process.on('SIGINT', function() {
 });
 
 const server = new ws.Server({
-    port: 5100
+    port: 5100, host: "0.0.0.0"
 })
 
 
@@ -38,14 +38,19 @@ async function run() {
 
     server.on('connection', (ws) => {
         console.log("New Connection")
-        setInterval(() => {
+        const id = setInterval(() => {
             try {
-                ws.send(JSON.stringify({data_driver: data_driver.data, camera_driver: camera_driver.data, hardware_driver: hardware_driver.data}))
+                ws.send(JSON.stringify({time: Date.now(),data_driver: data_driver.data, camera_driver: camera_driver.data, hardware_driver: hardware_driver.data}))
             } catch(e) {
-
+                console.log("Lost connection! Closing stream.")
+                clearInterval(id)
             }
-        }, 200)
+        }, 100)
     });
+
+    setInterval(() => {
+        //console.log(data_driver.data)
+    }, 500)
 
 
     /*const servos = 2
