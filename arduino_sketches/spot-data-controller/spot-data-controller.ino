@@ -1,96 +1,147 @@
-#include <i2c_t3.h>
+#include <Arduino_JSON.h>
+#include <Vector.h>
+#include <SCServo.h>
 
 #define DEBUG false
+#define SAMPLE_RATE 20  // SAMPLES per second
+#define MEAN_BUFFER_SIZE 512
+#define NUM_DATA_VARIABLE 4
 
-#define I2C_ADDRESS 8
+#define C_B_1 -0.91693
+#define C_B_2 0.136255
+#define C_B_3 0.078128
+#define C_B_4 0.000066
+#define C_B_5 -0.009801
 
-#define SAMPLE_RATE 20 // SAMPLES per second.
-#define SAMPLE_RANGE true
+float accumulated_energy = 0;
+float last_power = 0;
+unsigned long last_micros = 0;
+unsigned long prev_millis = millis();
+
+float mean_voltage_buffer[MEAN_BUFFER_SIZE];
+float mean_current_buffer[MEAN_BUFFER_SIZE];
+
+Vector<float> mean_voltage_vector(mean_voltage_buffer);
+Vector<float> mean_current_vector(mean_current_buffer);
+
+float stored_data[NUM_DATA_VARIABLE];
+
+SCSCL sc1;  // Front Legs
+SCSCL sc2;  // Back Legs
+
+bool FRONT_LEGS_ENABLED[] = { true, true, true, true, true, true };
+bool BACK_LEGS_ENABLED[] = { true, true, true, true, true, true };
 
 void setup() {
-    analogReadResolution(14);
+  Serial.begin(115200);
+  analogReadResolution(12);
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 
-    if (DEBUG) {
-        Serial.begin(9600);
-        delay(500);
+  Serial1.begin(1000000);
+  sc1.pSerial = &Serial1;
+  Serial2.begin(1000000);
+  sc2.pSerial = &Serial2;
+
+  for (short i = 1; i <= 6; i++) {
+    if (sc1.FeedBack(i) == -1) {
+      FRONT_LEGS_ENABLED[i-1] = false;
+    } else if (FRONT_LEGS_ENABLED[i-1]) {
+      sc1.EnableTorque(i, true);
     }
+  }
 
-    Wire.begin(I2C_SLAVE, I2C_ADDRESS, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
-    delay(500);
-    Wire.onRequest(requestEvents);
-    Wire.onReceive(receiveEvents);
+  for (short i = 1; i <= 6; i++) {
+    if (sc2.FeedBack(i) == -1) {
+      BACK_LEGS_ENABLED[i-1] = false;
+    } else if (BACK_LEGS_ENABLED[i-1]) {
+      sc2.EnableTorque(i, true);
+    }
+  }
 
-    pinMode(A0, INPUT);
-    pinMode(A1, INPUT);
-    pinMode(A2, INPUT);
-    pinMode(6, OUTPUT);
-    pinMode(7, OUTPUT);
-    pinMode(8, INPUT);
-    pinMode(9, INPUT);
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
-int cmd = 0;
+void loop() {
+  unsigned long current_micros = micros();
+  short raw_voltage = analogRead(A0);
+  float voltage = raw_voltage * 0.0032964978;
+  short raw_current = analogRead(A1);
+  float current = C_B_1 + C_B_2 * voltage + C_B_3 * raw_current + C_B_4 * pow(raw_current, 2) + C_B_5 * voltage * raw_current;
+  float power = voltage * current;
+  accumulated_energy += (current_micros - last_micros) * (last_power + power) * 1.38888889e-10;
 
-// 0 = voltage, 1 = current, 2 = bec_temp, range_0, range_1
-const int stored_data_length = 5;
-int stored_data[stored_data_length] = {0,0,0,0,0};
+  last_micros = current_micros;
+  last_power = power;
 
-unsigned long previousMillis = millis();
+  mean_voltage_vector.push_back(voltage);
+  mean_current_vector.push_back(current);
+  if (mean_voltage_vector.size() >= MEAN_BUFFER_SIZE) {
+    mean_voltage_vector.remove(0);
+    mean_current_vector.remove(0);
+  }
 
-void loop(){
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= (1000/SAMPLE_RATE)) {
-        previousMillis = currentMillis;
-        updateData();
+  if (Serial.available() != 0) {
+    String data = Serial.readStringUntil('\n');
+    JSONVar response = JSON.parse(data);
 
-        if (DEBUG) {
-            for(int i = 0; i < stored_data_length; i++) {
-                Serial.print(stored_data[i]);
-                Serial.print("\t");
-            }
-            Serial.println("");
-        }
-    }
-}
+    for (short i = 0; i < response.keys().length(); i++) {
+      String key = (String)response.keys()[i];
 
-void requestEvents() {
-    if (cmd > 0) {
-        uint8_t data_array[2];
-        data_array[0] = (stored_data[cmd - 1] >> 8) & 0xFF;
-        data_array[1] = stored_data[cmd - 1] & 0xFF;
-        Wire.write(data_array, 2);
-        cmd = 0;
-    }
-}
-
-void receiveEvents(size_t numBytes) {
-    int index = 0;
-    int data[numBytes];
-    while(Wire.available()) {
-        data[index] = Wire.read();
-        index += 1;
+      if (key.startsWith("f")) {
+        sc1.RegWritePos(int(key.charAt(2)), (int)response[key]["pos"], 0, response[key]["speed"]);
+      } else if (key.startsWith("b")) {
+        sc2.RegWritePos(int(key.charAt(2)), (int)response[key]["pos"], 0, response[key]["speed"]);
+      }
     }
 
-    cmd = data[0];
-}
+    sc1.RegWriteAction();
+    sc2.RegWriteAction();
+  }
 
-void updateData() {
-    stored_data[0] = analogRead(A0);
-    stored_data[1] = analogRead(A1);
-    stored_data[2] = analogRead(A2);
+  unsigned long current_millis = millis();
+  if (current_millis - prev_millis >= (1000 / SAMPLE_RATE)) {
+    prev_millis = current_millis;
+    JSONVar payload;
 
-    if (SAMPLE_RANGE) {
-        for (int i = 0; i < 1; i++) {
-            digitalWrite(6 + i, LOW);
-            delayMicroseconds(5);
-            digitalWrite(6 + i, HIGH);
-            delayMicroseconds(10);
-            digitalWrite(6 + i, LOW);
-
-            int duration = pulseIn(8 + i, HIGH);
-            stored_data[3 + i] = duration;
-        }
+    float mean_voltage_calc = 0;
+    float mean_current_calc = 0;
+    for (int i = 0; i < MEAN_BUFFER_SIZE; i++) {
+      mean_voltage_calc += mean_voltage_buffer[i];
+      mean_current_calc += mean_current_buffer[i];
     }
+
+    payload["voltage"] = mean_voltage_calc / MEAN_BUFFER_SIZE;
+    payload["current"] = mean_current_calc / MEAN_BUFFER_SIZE;
+    payload["energy"] = accumulated_energy;
+
+    for (short i = 1; i <= 6; i++) {
+      String key = "f_" + String(i);
+      payload[key]["enabled"] = FRONT_LEGS_ENABLED[i-1];
+      if (FRONT_LEGS_ENABLED[i-1] && sc1.FeedBack(i) != -1) {
+        payload[key]["pos"] = sc1.ReadPos(-1);
+        payload[key]["speed"] = sc1.ReadSpeed(-1);
+        payload[key]["load"] = sc1.ReadLoad(-1);
+        payload[key]["voltage"] = sc1.ReadVoltage(-1) / 10.0;
+        payload[key]["temp"] = sc1.ReadTemper(-1);
+        payload[key]["moving"] = sc1.ReadMove(-1);
+      }
+    }
+
+    for (short i = 1; i <= 6; i++) {
+      String key = "b_" + String(i);
+      payload[key]["enabled"] = BACK_LEGS_ENABLED[i-1];
+      if (BACK_LEGS_ENABLED[i-1] && sc2.FeedBack(i) != -1) {
+        payload[key]["pos"] = sc2.ReadPos(-1);
+        payload[key]["speed"] = sc2.ReadSpeed(-1);
+        payload[key]["load"] = sc2.ReadLoad(-1);
+        payload[key]["voltage"] = sc2.ReadVoltage(-1) / 10.0;
+        payload[key]["temp"] = sc2.ReadTemper(-1);
+        payload[key]["moving"] = sc2.ReadMove(-1);
+      }
+    }
+
+    Serial.println(payload);
+  }
 }

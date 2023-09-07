@@ -7,8 +7,8 @@
     "dev": "ts-node index.ts",
     "prod": "NODE_ENV=production ts-node index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "arduino-cli compile --fqbn arduino:avr:leonardo arduino_sketches/spot-data-controller",
-    "upload": "arduino-cli upload arduino_sketches/spot-data-controller -t -b arduino:avr:leonardo -p /dev/ttyACM0"
+    "compile": "arduino-cli compile --fqbn arduino:avr:leonardo ../arduino_sketches/spot-data-controller",
+    "upload": "arduino-cli upload ../arduino_sketches/spot-data-controller -t -b arduino:avr:leonardo -p /dev/ttyACM0"
   },
   "author": "",
   "license": "ISC",

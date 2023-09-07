@@ -63,15 +63,11 @@ export default class DataDriver extends Logger {
                 calc: this.VOLTAGE_KOEFFS[0] + this.VOLTAGE_KOEFFS[1]*raw_voltage_data
             }
 
-            sleep(10)
-
             const raw_current_data = this.readData(2)
             this.data.current = {
                 raw: raw_current_data,
                 calc: raw_current_data
             }
-
-            sleep(10)
 
             const raw_bec_temp_data = this.readData(3)
             this.data.bec_temp = {
@@ -79,15 +75,11 @@ export default class DataDriver extends Logger {
                 calc: this.BEC_TEMP_KOEFFS[0] + this.BEC_TEMP_KOEFFS[1]*raw_bec_temp_data
             }
 
-            sleep(10)
-
             const raw_distance_sensor_0_data = this.readData(4)
             this.data.distance_sensor_0 = {
                 raw: raw_distance_sensor_0_data,
                 calc: (raw_distance_sensor_0_data/2) / 29.1
             }
-
-            sleep(10)
 
             const raw_distance_sensor_1_data = this.readData(5)
             this.data.distance_sensor_1 = {
@@ -96,7 +88,6 @@ export default class DataDriver extends Logger {
             }
         }
 
-        collect()
         this.collecting_data_interval_id = setInterval(collect, 100)
     }
 
@@ -104,8 +95,7 @@ export default class DataDriver extends Logger {
         if (process.env.NODE_ENV == "production") {
             const buffer = Buffer.alloc(2)
             this.bus.readI2cBlockSync(this.i2c_address, addr, 2, buffer)
-            const number = buffer.readUInt16BE()
-            return number
+            return buffer.readUInt16BE()
         } else {
             return 0
         }
