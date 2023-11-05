@@ -7,7 +7,7 @@
 #define NUM_DATA_VARIABLE 4
 
 #define C_V 0.008024341496
-#define C_C 0.016216216216
+#define C_C 0.116666666666 //0.016216216216
 
 #define C_B_1 -0.91693
 #define C_B_2 0.136255
@@ -18,7 +18,6 @@
 float used_capacity = 0;
 float last_current = 0;
 unsigned long last_micros = 0;
-unsigned long prev_millis = millis();
 
 float mean_voltage_buffer[MEAN_BUFFER_SIZE];
 float mean_current_buffer[MEAN_BUFFER_SIZE];

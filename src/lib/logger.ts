@@ -11,11 +11,16 @@ export default class Logger {
     static LOG_PATH = "./logs"
     static instance_names: number[] = []
 
-    setLogPrefix(instance) {
-        const name: string = instance.constructor.name
-        this.LOG_PREFIX = name.split("")
-            .map((c, index) => c.toUpperCase() == c && index > 0? ` ${c}`: c).join("").toUpperCase()
-        Logger.instance_names.push(this.LOG_PREFIX.length)
+    setLogPrefix(instance: any | string) {
+        if (typeof instance == "string") {
+            this.LOG_PREFIX = "[" + instance + "]"
+        } else {
+            const name: string = instance.constructor.name
+            this.LOG_PREFIX = "[" + name.split("")
+                .map((c, index) => c.toUpperCase() == c && index > 0? ` ${c}`: c)
+                .join("").toUpperCase() + "]"
+            Logger.instance_names.push(this.LOG_PREFIX.length)
+        }
     }
 
     static init() {
@@ -50,21 +55,20 @@ export default class Logger {
     log(data: any) {
         const date = new Date(Date.now())
         if (this.PRINT_DATE) {
-            console.log(` [${this.formatCurrentDate(date)} ${this.getTime(date)}]\x1b[32m [INFO]\x1b[34m  ${this.LOG_PREFIX}${"\t".repeat(this.TABS)}\x1b[37m`, data)
+            console.log(`[${this.formatCurrentDate(date)} ${this.getTime(date)}]\x1b[32m [INFO]\x1b[34m  ${this.LOG_PREFIX}${"\t".repeat(this.TABS)}\x1b[37m`, data)
         } else {
-            console.log(`\x1b[32m[INFO]\x1b[34m [${this.LOG_PREFIX}]${"\t".repeat(this.TABS)}\x1b[37m`, data)
+            console.log(`\x1b[32m[INFO]\x1b[34m ${this.LOG_PREFIX}${"\t".repeat(this.TABS)}\x1b[37m`, data)
         }
         if (this.WRITE_TO_FILE) {
             this.writeToFile("main/info_" + this.formatCurrentDate(date) + ".log",
                 `[${this.formatCurrentDate(date)} ${this.getTime(date)}] [INFO]  [${this.LOG_PREFIX}] ${"\t".repeat(this.TABS)}   `+ data.toString())
         }
-
     }
 
     error(data: any) {
         const date = new Date(Date.now())
         if (this.PRINT_DATE) {
-            console.log(` [${this.formatCurrentDate(date)} ${this.getTime(date)}]\x1b[31m [ERROR]\x1b[34m ${this.LOG_PREFIX}${"\t".repeat(this.TABS)}\x1b[37m`, data)
+            console.log(`[${this.formatCurrentDate(date)} ${this.getTime(date)}]\x1b[31m [ERROR]\x1b[34m ${this.LOG_PREFIX}${"\t".repeat(this.TABS)}\x1b[37m`, data)
         } else {
             console.log(`[ERROR]\x1b[34m ${this.LOG_PREFIX}${"\t".repeat(this.TABS)}\x1b[37m`, data)
         }
